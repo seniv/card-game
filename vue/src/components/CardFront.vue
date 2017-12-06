@@ -1,11 +1,11 @@
 <template>
-  <li class="card" :data-card="card" :class="{red: mast == 'heart' || mast == 'diams'}" v-html="symbol"></li>
+  <li class="card" :data-card="card" :class="[red, size]" v-html="symbol"></li>
 </template>
 
 <script>
 export default {
   name: 'card-front',
-  props: ['card', 'mast'],
+  props: ['card', 'mast', 'size'],
   data () {
     return {
     }
@@ -19,6 +19,12 @@ export default {
         case 'clubs': return '&clubs;'
       }
       return ''
+    },
+    red () {
+      if (this.mast === 'heart' || this.mast === 'diams') {
+        return 'red'
+      }
+      return ''
     }
   }
 }
@@ -27,26 +33,46 @@ export default {
 <style>
   li.card {
     display: inline-block;
-    width: 100px;
-    height: 160px;
-    background-color: #eeeeee;
+    width: 80px;
+    height: 130px;
+    background-color: #fff;
     border-radius: 5px;
     transition: .3s;
-    padding-top: 30px;
-    font-size: 80px;
+    padding-top: 25px;
+    font-size: 65px;
     position: relative;
     cursor: pointer;
     box-sizing: border-box;
     text-align: center;
+    user-select: none;
   }
 
   li.card.red {
     color: #d00;
   }
 
+  li.card:not(:first-child) {
+    margin-left: 5px;
+  }
+
+  li.card.super-small:not(:first-child) {
+    margin-left: -70px;
+    box-shadow: -5px 0px 10px 0px rgba(0, 0, 0, 0.05);
+  }
+
+  li.card.very-small:not(:first-child) {
+    margin-left: -50px;
+    box-shadow: -5px 0px 10px 0px rgba(0, 0, 0, 0.05);
+  }
+
+  li.card.small:not(:first-child) {
+    margin-left: -30px;
+    box-shadow: -5px 0px 10px 0px rgba(0, 0, 0, 0.05);
+  }
+
   li.card:hover {
     transform: scale(1.1);
-    box-shadow: 0px 0px 10px 0px rgba(0, 0, 0, 0.25);
+    box-shadow: 0px 0px 10px 0px rgba(0, 0, 0, 0.20);
     z-index: 322;
   }
 
@@ -67,9 +93,6 @@ export default {
     bottom: 10px;
     right: 10px;
     transform: rotate(180deg)
-  }
-  li.card:not(:first-child) {
-    margin-left: 5px;
   }
 
   /* @media screen and (max-width:768px) {
