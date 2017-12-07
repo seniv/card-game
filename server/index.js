@@ -5,8 +5,11 @@ const cards = require('./cards')
 
 let games = new Map()
 
-io.on('connection', function (socket) {
-  socket.on('createGame', function () {
+io.on('connection', (socket) => {
+  socket.on('getGames', () => {
+    socket.emit('gamesList', gamesList())
+  })
+  socket.on('createGame', () => {
     if (socket.gameId) return false
     let gameId = Math.random()
     games.set(gameId, {
@@ -15,27 +18,31 @@ io.on('connection', function (socket) {
       }),
       players: [{
         id: socket.id,
-        cards: []
+        cards: [],
+        move: 0 // 0 - not your move | 1 - your move | 2 - you must beat
       }],
       playground: [],
       started: false,
-      cozur: false
+      trump: false
     })
     socket.join('game' + gameId)
     socket.gameId = gameId
+    socket.emit('gameCreated', gameId)
     console.log('game id', gameId, 'created')
   })
-  socket.on('connectToGame', function (id) {
+  socket.on('connectToGame', (id) => {
     if (socket.gameId) return false
     if (!games.has(id)) return socket.emit('message', 'game not found')
+    if (games.get(id).started) return socket.emit('message', 'you cant connect to started game')
     console.log('user', socket.id, 'connected to game', id)
     games.get(id).players.push({
       id: socket.id,
-      cards: []
+      cards: [],
+      move: 0
     })
     socket.emit('message', 'connected to game')
   })
-  socket.on('startGame', function () {
+  socket.on('startGame', () => {
     if (!socket.gameId || !games.has(socket.gameId) || games.get(socket.gameId).started) return false
     if (games.get(socket.gameId).players.length < 1) {
       socket.emit('message', 'cant start game if players less then two')
@@ -44,33 +51,16 @@ io.on('connection', function (socket) {
     console.log('game', socket.gameId, 'was started')
 
     games.get(socket.gameId).started = true
-    games.get(socket.gameId).cozur = games.get(socket.gameId).cards[0].mast;
-    let players = games.get(socket.gameId).players
-    for (let i = 0; i < players.length; i++) {
-      for (let x = 0; x < 6; x++) {
-        players[i].cards.push(games.get(socket.gameId).cards.pop())
-      }
-      players[i].lessKozur = 100
-      for (let x = 0; x < players[i].cards.length; x++) {
-        let card = players[i].cards[x]
-        if (card.mast === games.get(socket.gameId).cozur) {
-          if (cardWeight(card.card) < players[i].lessKozur) {
-            players[i].lessKozur = cardWeight(card.card)
-          }
-        }
-      }
-    }
-    // TODO: make firt move
-    for (let i = 0; i < players.length; i++) {
-      
-      io.to(players[i].id).emit('gameUpdate', {
-        cardsLeft: games.get(socket.gameId).cards.length,
-        cards: players[i].cards,
-        cozur: games.get(socket.gameId).cards[0]
-      })
-    }
+    games.get(socket.gameId).trump = games.get(socket.gameId).cards[0].mast;
+
+    giveCardsFirstTime(socket.gameId)
+    updateGame(socket.gameId)
   })
-  socket.on('leaveGame', function () {
+  socket.on('makeMove', (card) => {
+    if (!socket.gameId || !games.has(socket.gameId)) return false
+    makeMove(socket, card)
+  })
+  socket.on('leaveGame', () => {
     if (!socket.gameId || !games.has(socket.gameId)) return false
     console.log('user', socket.id, 'leave game', socket.gameId)
     games.get(socket.gameId).players.find((item, i, array) => {
@@ -85,7 +75,7 @@ io.on('connection', function (socket) {
     }
     delete socket.gameId
   })
-  socket.on('disconnect', function () {
+  socket.on('disconnect', () => {
     console.log('user', socket.id, 'disconected')
     if (socket.gameId && games.has(socket.gameId)) {
       games.get(socket.gameId).players.find((item, i, array) => {
@@ -101,6 +91,89 @@ io.on('connection', function (socket) {
     }
   })
 })
+
+function makeMove(socket, card) {
+  card = card.split(':')
+  let game = games.get(socket.gameId)
+  let player = game.players.find(item => item.id === socket.id)
+  if (!player.cards.find(item => item.card === card[0] && item.mast === card[1])) return socket.emit('message', 'your dont have this card O_o')
+  switch (player.move) {
+    case 1:
+      card = player.cards.find((item, index, array) => {
+        if(item.card === card[0] && item.mast === card[1]) {
+          array.splice(index, 1)
+          return true
+        }
+      })
+      game.playground.push({
+        placedCard: card,
+        beatedCard: false
+      })
+      player.move = 0
+      updateGame(socket.gameId)
+      break
+    default: return socket.emit('message', 'your cant move!')
+  }
+}
+
+function updateGame(id) {
+  let players = games.get(id).players
+  for (let i = 0; i < players.length; i++) {
+    io.to(players[i].id).emit('gameUpdate', {
+      cardsLeft: games.get(id).cards.length,
+      cards: players[i].cards,
+      trump: games.get(id).cards[0],
+      yourMove: players[i].move,
+      playground: games.get(id).playground
+    })
+  }
+}
+
+function giveCardsFirstTime(id) {
+  let players = games.get(id).players
+  for (let i = 0; i < players.length; i++) {
+    players[i].lessTrump = 100
+
+    for (let x = 0; x < 6; x++) {
+      let card = games.get(id).cards.pop()
+      players[i].cards.push(card)
+
+      if (card.mast === games.get(id).trump) {
+        if (cardWeight(card.card) < players[i].lessTrump) {
+          players[i].lessTrump = cardWeight(card.card)
+        }
+      }
+    }
+  }
+
+  let playerWithLessTrump = -1
+  let lessTrump = 100
+  for (let i = 0; i < players.length; i++) {
+    if (players[i].lessTrump < lessTrump) {
+      lessTrump = players[i].lessTrump
+      playerWithLessTrump = i
+    }
+    delete players[i].lessTrump
+  }
+  if (playerWithLessTrump !== -1) {
+    players[playerWithLessTrump].move = 1
+  } else {
+    players[Math.round(Math.random()*players.length)].move = 1
+  }
+  console.log(players)
+}
+
+function gamesList() {
+  let gam = []
+  games.forEach((value, key) => {
+    gam.push({
+      id: key,
+      players: value.players.length,
+      started: value.started
+    })
+  })
+  return gam
+}
 
 function cardWeight (card) {
   switch (card) {

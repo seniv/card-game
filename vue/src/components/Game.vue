@@ -13,11 +13,11 @@
     </ul>
     <ul class="cards-left">
       <card-back v-show="cardsLeft > 1"></card-back>
-      <card-front v-show="cardsLeft > 0 && cozur" :mast="cozur.mast" style="transform: rotate(90deg); margin-left: -40px; margin-right: 40px;" :card="cozur.card"></card-front>
-      <li style="display: inline-block;" @click="$socket.emit('createGame')">Cards left:<br>{{cardsLeft}}</li>
+      <card-front v-show="cardsLeft > 0 && trump" :mast="trump.mast" style="transform: rotate(90deg); margin-left: -40px; margin-right: 40px;" :card="trump.card"></card-front>
+      <li style="display: inline-block;">Cards left:<br>{{cardsLeft}}</li>
     </ul>
     <ul class="your-cards">
-      <card-front :mast="card.mast" :size="getSize(cards.length)" :card="card.card" v-for="(card, index) in cards" :key="index"></card-front>
+      <card-front @click="clickOnCard" :mast="card.mast" :size="getSize(cards.length)" :card="card.card" v-for="(card, index) in cards" :key="index"></card-front>
     </ul>
     <button @click="$socket.emit('startGame')">start game</button>
   </div>
@@ -28,6 +28,7 @@ import CardFront from '@/components/CardFront.vue'
 import CardBack from '@/components/CardBack.vue'
 
 export default {
+  props: ['id'],
   name: 'game',
   components: {
     CardFront,
@@ -43,9 +44,10 @@ export default {
         {card: 'a', mast: 'clubs'},
         {card: 'a', mast: 'clubs'}
       ],
-      cozur: false,
+      trump: false,
       enemyCards: 6,
       cardsLeft: 36,
+      yourMove: 0,
       playground: [{
         placedCard: {
           card: 'j',
@@ -76,9 +78,11 @@ export default {
     },
     gameUpdate (data) {
       console.log('game updated')
-      if (data.cozur) this.cozur = data.cozur
+      if (data.trump) this.trump = data.trump
       this.cards = data.cards
       this.cardsLeft = data.cardsLeft
+      this.playground = data.playground
+      this.yourMove = data.yourMove
     }
   },
   methods: {
@@ -89,6 +93,12 @@ export default {
         return 'small'
       }
       return ''
+    },
+    clickOnCard (data) {
+      if (this.yourMove > 0) {
+        this.$socket.emit('makeMove', data)
+      }
+      console.log('clicked on card', data)
     }
   }
 }

@@ -1,5 +1,5 @@
 <template>
-  <li class="card" :data-card="card" :class="[red, size]" v-html="symbol"></li>
+  <li class="card" @click="$emit('click', card + ':' + mast)" :data-card="card" :class="[red, size]" v-html="symbol"></li>
 </template>
 
 <script>
