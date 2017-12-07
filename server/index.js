@@ -25,7 +25,7 @@ io.on('connection', (socket) => {
   socket.on('connectToGame', (id) => {
     if (socket.gameId) return false
     if (!games.has(id)) return socket.emit('message', 'game not found')
-    if (games.get(id).started) return socket.emit('message', 'you cant connect to started game')
+    if (games.get(id).isStarted) return socket.emit('message', 'you cant connect to started game')
 
     console.log('user', socket.id, 'connected to game', id)
     games.get(id).newPlayer(socket.id)
@@ -33,8 +33,8 @@ io.on('connection', (socket) => {
   })
 
   socket.on('startGame', () => {
-    if (!socket.gameId || !games.has(socket.gameId) || games.get(socket.gameId).started) return false
-    if (games.get(socket.gameId).players < 1) {
+    if (!socket.gameId || !games.has(socket.gameId) || games.get(socket.gameId).isStarted) return false
+    if (games.get(socket.gameId).playersCount < 1) {
       socket.emit('message', 'cant start game if players less then two')
       return
     }
@@ -52,13 +52,8 @@ io.on('connection', (socket) => {
   socket.on('leaveGame', () => {
     if (!socket.gameId || !games.has(socket.gameId)) return false
     console.log('user', socket.id, 'leave game', socket.gameId)
-    games.get(socket.gameId).players.find((item, i, array) => {
-      if (item.id === socket.id) {
-        array.splice(i, 1)
-        return true
-      }
-    })
-    if (games.get(socket.gameId).players.length < 1) {
+    games.get(socket.gameId).playerLeft(socket.id)
+    if (games.get(socket.gameId).playersCount < 1) {
       games.delete(socket.gameId)
       console.log('game with id', socket.gameId, 'was deleted')
     }
@@ -69,7 +64,7 @@ io.on('connection', (socket) => {
     console.log('user', socket.id, 'disconected')
     if (socket.gameId && games.has(socket.gameId)) {
       games.get(socket.gameId).playerLeft(socket.id)
-      if (games.get(socket.gameId).players < 1) {
+      if (games.get(socket.gameId).playersCount < 1) {
         games.delete(socket.gameId)
         console.log('game with id', socket.gameId, 'was deleted')
       }
@@ -90,10 +85,7 @@ function makeMove(socket, card) {
           return true
         }
       })
-      game.playground.push({
-        placedCard: card,
-        beatedCard: false
-      })
+      game.addToPlayground(card)
       player.move = 0
       updateGame(socket.gameId)
       break
@@ -102,16 +94,15 @@ function makeMove(socket, card) {
 }
 
 function updateGame(id) {
-  let players = games.get(id).allPlayers
-  for (let i = 0; i < players.length; i++) {
-    io.to(players[i].id).emit('gameUpdate', {
-      cardsLeft: games.get(id).cards.length,
-      cards: players[i].cards,
+  games.get(id).allPlayers.forEach((player, key) => {
+    io.to(key).emit('gameUpdate', {
+      cardsLeft: games.get(id).cardsLeft,
+      cards: player.cards,
       trump: games.get(id).cards[0],
-      yourMove: players[i].move,
-      playground: games.get(id).playground
+      yourMove: player.move,
+      playground: games.get(id).getPlayground
     })
-  }
+  })
 }
 
 function gamesList() {

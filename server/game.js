@@ -1,19 +1,20 @@
 const cards = require('./cards')
 const shuffle = require('shuffle-array')
 const cardWeight = require('./heplers').cardWeight
+const randomKey = require('./heplers').randomKey
 
-module.exports = class {
+module.exports = class Game {
   constructor () {
     this.id = Math.random()
     this.cards = shuffle(cards, { copy: true })
-    this.players = []
+    this.players = new Map()
     this.playground = []
     this.started = false
     this.trump = false
   }
 
   newPlayer (id) {
-    this.players.push({
+    this.players.set(id, {
       id: id,
       cards: [],
       move: 0 // 0 - not your move | 1 - your move | 2 - you must beat
@@ -21,12 +22,7 @@ module.exports = class {
   }
 
   playerLeft (id) {
-    this.players.find((item, i, array) => {
-      if (item.id === id) {
-        array.splice(i, 1)
-        return true
-      }
-    })
+    this.players.delete(id)
   }
 
   startGame () {
@@ -36,59 +32,74 @@ module.exports = class {
     this.__giveCardsFirsTime ()
   }
 
-  get player (id) {
-    return this.players.find(player => player.id === id)
+  addToPlayground (card) {
+    this.playground.push({
+      placedCard: card,
+      beatedCard: false
+    })
+  }
+
+  player (id) {
+    return this.players.get(id)
   }
 
   get allPlayers () {
     return this.players
   }
 
-  get players () {
-    return this.players.length
+  get playersCount () {
+    return this.players.size
   }
 
-  get started () {
+  get isStarted () {
     return this.started
   }
 
   get gameInfo () {
     return {
       id: this.id,
-      players: this.players.length,
+      players: this.players.size,
       started: this.started
     }
   }
 
+  get cardsLeft () {
+    return this.cards.length
+  }
+
+  get getPlayground () {
+    return this.playground
+  }
+
   __giveCardsFirsTime () {
-    for (let i = 0; i < this.players.length; i++) {
-    this.players[i].lessTrump = 100
-  
+    this.players.forEach((player, key) => {
+      player.lessTrump = 100
+
       for (let x = 0; x < 6; x++) {
         let card = this.cards.pop()
-        this.players[i].cards.push(card)
+        player.cards.push(card)
   
         if (card.mast === this.trump) {
-          if (cardWeight(card.card) < this.players[i].lessTrump) {
-            this.players[i].lessTrump = cardWeight(card.card)
+          if (cardWeight(card.card) < player.lessTrump) {
+            player.lessTrump = cardWeight(card.card)
           }
         }
       }
-    }
-  
+    })
+
     let playerWithLessTrump = -1
     let lessTrump = 100
-    for (let i = 0; i < this.players.length; i++) {
-      if (this.players[i].lessTrump < lessTrump) {
-        lessTrump = players[i].lessTrump
-        playerWithLessTrump = i
+    this.players.forEach((player, key) => {
+      if (player.lessTrump < lessTrump) {
+        lessTrump = player.lessTrump
+        playerWithLessTrump = key
       }
-      delete this.players[i].lessTrump
-    }
+      delete this.player.lessTrump
+    })
     if (playerWithLessTrump !== -1) {
-      this.players[playerWithLessTrump].move = 1
+      this.players.get(playerWithLessTrump).move = 1
     } else {
-      this.players[Math.round(Math.random()*players.length)].move = 1
+      this.players.get(randomKey(this.players)).move = 1
     }
   }
 }

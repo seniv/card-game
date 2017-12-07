@@ -77,6 +77,7 @@ export default {
       console.log(text)
     },
     gameUpdate (data) {
+      console.log(data)
       console.log('game updated')
       if (data.trump) this.trump = data.trump
       this.cards = data.cards

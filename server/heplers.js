@@ -12,3 +12,8 @@ module.exports.cardWeight = (card) => {
     default: return 0
   }
 }
+
+module.exports.randomKey = (map) => {
+  let items = Array.from(map.keys())
+  return items[Math.floor(Math.random() * items.length)]
+}
