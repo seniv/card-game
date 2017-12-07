@@ -11,6 +11,8 @@ module.exports = class Game {
     this.playground = []
     this.started = false
     this.trump = false
+    this.currentPlayer
+    this.moveTo
   }
 
   newPlayer (id) {
@@ -41,6 +43,19 @@ module.exports = class Game {
 
   player (id) {
     return this.players.get(id)
+  }
+
+  nextPlayer (id) {
+    let array = Array.from(this.players.keys())
+    for (let i = 0; i < array.length; i++) {
+      if (array[i] === id) {
+        if (i + 1 >= array.length) {
+          return array[0]
+        } else {
+          return array[i+1]
+        }
+      }
+    }
   }
 
   get allPlayers () {
@@ -96,10 +111,12 @@ module.exports = class Game {
       }
       delete this.player.lessTrump
     })
-    if (playerWithLessTrump !== -1) {
-      this.players.get(playerWithLessTrump).move = 1
-    } else {
-      this.players.get(randomKey(this.players)).move = 1
+    if (playerWithLessTrump === -1) {
+      playerWithLessTrump = randomKey(this.players)
     }
+    this.currentPlayer = playerWithLessTrump
+    this.players.get(this.currentPlayer).move = 1
+    this.moveTo = this.nextPlayer(this.currentPlayer)
+    this.players.get(this.moveTo).move = 2
   }
 }

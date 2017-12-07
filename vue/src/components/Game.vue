@@ -36,37 +36,12 @@ export default {
   },
   data () {
     return {
-      cards: [
-        {card: 'j', mast: 'heart'},
-        {card: 'q', mast: 'diams'},
-        {card: 'k', mast: 'spades'},
-        {card: 'a', mast: 'clubs'},
-        {card: 'a', mast: 'clubs'},
-        {card: 'a', mast: 'clubs'}
-      ],
+      cards: [],
       trump: false,
-      enemyCards: 6,
-      cardsLeft: 36,
+      enemyCards: 0,
+      cardsLeft: 0,
       yourMove: 0,
-      playground: [{
-        placedCard: {
-          card: 'j',
-          mast: 'heart'
-        },
-        beatedCard: {
-          card: 'a',
-          mast: 'heart'
-        }
-      }, {
-        placedCard: {
-          card: 'j',
-          mast: 'spades'
-        },
-        beatedCard: {
-          card: 'a',
-          mast: 'spades'
-        }
-      }]
+      playground: []
     }
   },
   sockets: {

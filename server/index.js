@@ -18,23 +18,25 @@ io.on('connection', (socket) => {
 
     socket.join('game' + game.id)
     socket.gameId = game.id
-    socket.emit('gameCreated', game.id)
+    socket.emit('gameIsReady', game.id)
     console.log('game id', game.id, 'created')
   })
-
+  
   socket.on('connectToGame', (id) => {
     if (socket.gameId) return false
     if (!games.has(id)) return socket.emit('message', 'game not found')
     if (games.get(id).isStarted) return socket.emit('message', 'you cant connect to started game')
-
+    
     console.log('user', socket.id, 'connected to game', id)
     games.get(id).newPlayer(socket.id)
-    socket.emit('message', 'connected to game')
+    socket.join('game' + id)
+    socket.gameId = id
+    socket.emit('gameIsReady', id)
   })
 
   socket.on('startGame', () => {
     if (!socket.gameId || !games.has(socket.gameId) || games.get(socket.gameId).isStarted) return false
-    if (games.get(socket.gameId).playersCount < 1) {
+    if (games.get(socket.gameId).playersCount < 2) {
       socket.emit('message', 'cant start game if players less then two')
       return
     }
@@ -86,6 +88,17 @@ function makeMove(socket, card) {
         }
       })
       game.addToPlayground(card)
+      player.move = 0
+      updateGame(socket.gameId)
+      break
+    case 2:
+      card = player.cards.find((item, index, array) => {
+        if(item.card === card[0] && item.mast === card[1]) {
+          array.splice(index, 1)
+          return true
+        }
+      })
+      game.getPlayground[game.getPlayground.length - 1].beatedCard = card
       player.move = 0
       updateGame(socket.gameId)
       break
