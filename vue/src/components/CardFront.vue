@@ -1,5 +1,5 @@
 <template>
-  <li class="card" @click="$emit('click', card + ':' + mast)" :data-card="card" :class="[red, size]" v-html="symbol"></li>
+  <li class="card" @click="$emit('click', card + ':' + mast)" :data-card="card" :class="[{ red }, size]" v-html="symbol"></li>
 </template>
 
 <script>
@@ -12,19 +12,13 @@ export default {
   },
   computed: {
     symbol () {
-      switch (this.mast) {
-        case 'heart': return '&hearts;'
-        case 'diams': return '&diams;'
-        case 'spades': return '&spades;'
-        case 'clubs': return '&clubs;'
+      if (this.mast === 'heart') {
+        return `&hearts;`
       }
-      return ''
+      return `&${this.mast};`
     },
     red () {
-      if (this.mast === 'heart' || this.mast === 'diams') {
-        return 'red'
-      }
-      return ''
+      return this.mast === 'heart' || this.mast === 'diams'
     }
   }
 }
