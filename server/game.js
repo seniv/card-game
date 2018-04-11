@@ -1,7 +1,6 @@
 const cards = require('./cards')
 const shuffle = require('shuffle-array')
-const cardWeight = require('./heplers').cardWeight
-const randomKey = require('./heplers').randomKey
+const { cardWeight, randomKey } = require('./heplers')
 
 module.exports = class Game {
   constructor () {
@@ -13,6 +12,7 @@ module.exports = class Game {
     this.trump = false
     this.currentPlayer
     this.moveTo
+    this.state = 0
   }
 
   newPlayer (id) {
@@ -29,9 +29,9 @@ module.exports = class Game {
 
   startGame () {
     this.started = true
-    this.trump = this.cards[0].mast
+    this.trump = this.cards[0].suit
 
-    this.__giveCardsFirsTime ()
+    this.__giveCardsFirsTime()
   }
 
   addToPlayground (card) {
@@ -94,7 +94,7 @@ module.exports = class Game {
         let card = this.cards.pop()
         player.cards.push(card)
   
-        if (card.mast === this.trump) {
+        if (card.suit === this.trump) {
           if (cardWeight(card.card) < player.lessTrump) {
             player.lessTrump = cardWeight(card.card)
           }
@@ -118,5 +118,6 @@ module.exports = class Game {
     this.players.get(this.currentPlayer).move = 1
     this.moveTo = this.nextPlayer(this.currentPlayer)
     this.players.get(this.moveTo).move = 2
+    this.state = 1
   }
 }

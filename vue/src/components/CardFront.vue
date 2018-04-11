@@ -1,24 +1,21 @@
 <template>
-  <li class="card" @click="$emit('click', card + ':' + mast)" :data-card="card" :class="[{ red }, size]" v-html="symbol"></li>
+  <li class="card" @click="$emit('click', card + ':' + suit)" :data-card="card" :class="[{ red: isRed }, size]" v-html="cardSymbol"></li>
 </template>
 
 <script>
 export default {
   name: 'card-front',
-  props: ['card', 'mast', 'size'],
+  props: ['card', 'suit', 'size'],
   data () {
     return {
     }
   },
   computed: {
-    symbol () {
-      if (this.mast === 'heart') {
-        return `&hearts;`
-      }
-      return `&${this.mast};`
+    cardSymbol () {
+      return `&${this.suit};`
     },
-    red () {
-      return this.mast === 'heart' || this.mast === 'diams'
+    isRed () {
+      return this.suit === 'hearts' || this.suit === 'diams'
     }
   }
 }
@@ -88,14 +85,4 @@ export default {
     right: 10px;
     transform: rotate(180deg)
   }
-
-  /* @media screen and (max-width:768px) {
-    li.card:not(:first-child) {
-      margin-left: -20px;
-      box-shadow: -5px 0px 10px 0px rgba(0, 0, 0, 0.15);
-    }
-    li.card:hover {
-      box-shadow: 0px 0px 10px 0px rgba(0, 0, 0, 0.20);
-    }
-  } */
 </style>

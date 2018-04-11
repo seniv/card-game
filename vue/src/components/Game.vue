@@ -6,18 +6,18 @@
     <ul class="playground">
       <li v-for="(card, index) in playground" :key="index">
         <ul>
-          <card-front :mast="card.placedCard.mast" size="super-small" :card="card.placedCard.card"></card-front>
-          <card-front v-show="card.beatedCard" :mast="card.beatedCard.mast" size="super-small" :card="card.beatedCard.card"></card-front>
+          <card-front :suit="card.placedCard.suit" size="super-small" :card="card.placedCard.card"></card-front>
+          <card-front v-show="card.beatedCard" :suit="card.beatedCard.suit" size="super-small" :card="card.beatedCard.card"></card-front>
         </ul>
       </li>
     </ul>
     <ul class="cards-left">
       <card-back v-show="cardsLeft > 1"></card-back>
-      <card-front v-show="cardsLeft > 0 && trump" :mast="trump.mast" style="transform: rotate(90deg); margin-left: -40px; margin-right: 40px;" :card="trump.card"></card-front>
+      <card-front v-show="cardsLeft > 0 && trump" :suit="trump.suit" style="transform: rotate(90deg); margin-left: -40px; margin-right: 40px;" :card="trump.card"></card-front>
       <li style="display: inline-block;">Cards left:<br>{{cardsLeft}}</li>
     </ul>
     <ul class="your-cards">
-      <card-front @click="clickOnCard" :mast="card.mast" :size="getSize(cards.length)" :card="card.card" v-for="(card, index) in cards" :key="index"></card-front>
+      <card-front @click="clickOnCard" :suit="card.suit" :size="getSize(cards.length)" :card="card.card" v-for="(card, index) in cards" :key="index"></card-front>
     </ul>
     <button @click="$socket.emit('startGame')">start game</button>
   </div>
@@ -50,6 +50,7 @@ export default {
     },
     massage (text) {
       console.log(text)
+      alert(text)
     },
     gameUpdate (data) {
       console.log(data)

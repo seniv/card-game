@@ -11,6 +11,7 @@ io.on('connection', (socket) => {
 
   socket.on('createGame', () => {
     if (socket.gameId) return false
+
     let game = new Game()
 
     games.set(game.id, game)
@@ -48,13 +49,16 @@ io.on('connection', (socket) => {
 
   socket.on('makeMove', (card) => {
     if (!socket.gameId || !games.has(socket.gameId)) return false
+
     makeMove(socket, card)
   })
 
   socket.on('leaveGame', () => {
     if (!socket.gameId || !games.has(socket.gameId)) return false
+
     console.log('user', socket.id, 'leave game', socket.gameId)
     games.get(socket.gameId).playerLeft(socket.id)
+
     if (games.get(socket.gameId).playersCount < 1) {
       games.delete(socket.gameId)
       console.log('game with id', socket.gameId, 'was deleted')
@@ -64,8 +68,10 @@ io.on('connection', (socket) => {
 
   socket.on('disconnect', () => {
     console.log('user', socket.id, 'disconected')
+
     if (socket.gameId && games.has(socket.gameId)) {
       games.get(socket.gameId).playerLeft(socket.id)
+
       if (games.get(socket.gameId).playersCount < 1) {
         games.delete(socket.gameId)
         console.log('game with id', socket.gameId, 'was deleted')
@@ -78,11 +84,16 @@ function makeMove(socket, card) {
   card = card.split(':')
   let game = games.get(socket.gameId)
   let player = game.player(socket.id)
-  if (!player.cards.find(item => item.card === card[0] && item.mast === card[1])) return socket.emit('message', 'your dont have this card O_o')
+  if (player.move !== game.state) {
+    return socket.emit('message', 'now is not your move!')
+  }
+  if (!player.cards.find(item => item.card === card[0] && item.suit === card[1])) {
+    return socket.emit('message', 'you dont have this card O_o')
+  }
   switch (player.move) {
     case 1:
       card = player.cards.find((item, index, array) => {
-        if(item.card === card[0] && item.mast === card[1]) {
+        if(item.card === card[0] && item.suit === card[1]) {
           array.splice(index, 1)
           return true
         }
@@ -93,7 +104,7 @@ function makeMove(socket, card) {
       break
     case 2:
       card = player.cards.find((item, index, array) => {
-        if(item.card === card[0] && item.mast === card[1]) {
+        if(item.card === card[0] && item.suit === card[1]) {
           array.splice(index, 1)
           return true
         }
@@ -119,9 +130,5 @@ function updateGame(id) {
 }
 
 function gamesList() {
-  let gam = []
-  games.forEach((value, key) => {
-    gam.push(value.gameInfo)
-  })
-  return gam
+  return Array.from(games.values(), game => game.gameInfo)
 }
