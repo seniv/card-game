@@ -1,7 +1,7 @@
 const io = require('socket.io')(8090)
 
 const Game = require('./game')
-const cardWeight = require('./heplers').cardWeight
+const { cardWeight } = require('./heplers')
 const games = new Map()
 
 io.on('connection', (socket) => {
@@ -113,7 +113,7 @@ function makeMove(socket, card) {
       player.move = 0
       updateGame(socket.gameId)
       break
-    default: return socket.emit('message', 'your cant move!')
+    default: return socket.emit('message', 'you cant move!')
   }
 }
 

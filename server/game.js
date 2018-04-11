@@ -1,11 +1,11 @@
 const cards = require('./cards')
-const shuffle = require('shuffle-array')
+const { shuffle } = require('lodash')
 const { cardWeight, randomKey } = require('./heplers')
 
 module.exports = class Game {
   constructor () {
     this.id = Math.random()
-    this.cards = shuffle(cards, { copy: true })
+    this.cards = shuffle(cards)
     this.players = new Map()
     this.playground = []
     this.started = false
