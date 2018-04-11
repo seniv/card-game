@@ -1,7 +1,7 @@
 const io = require('socket.io')(8090)
+const { isEqual } = require('lodash')
 
 const Game = require('./game')
-const { cardWeight } = require('./heplers')
 const games = new Map()
 
 io.on('connection', (socket) => {
@@ -81,19 +81,18 @@ io.on('connection', (socket) => {
 })
 
 function makeMove(socket, card) {
-  card = card.split(':')
-  let game = games.get(socket.gameId)
-  let player = game.player(socket.id)
+  const game = games.get(socket.gameId)
+  const player = game.player(socket.id)
   if (player.move !== game.state) {
     return socket.emit('message', 'now is not your move!')
   }
-  if (!player.cards.find(item => item.card === card[0] && item.suit === card[1])) {
+  if (!player.cards.find(item => isEqual(item, card))) {
     return socket.emit('message', 'you dont have this card O_o')
   }
   switch (player.move) {
     case 1:
       card = player.cards.find((item, index, array) => {
-        if(item.card === card[0] && item.suit === card[1]) {
+        if(isEqual(item, card)) {
           array.splice(index, 1)
           return true
         }
@@ -104,7 +103,7 @@ function makeMove(socket, card) {
       break
     case 2:
       card = player.cards.find((item, index, array) => {
-        if(item.card === card[0] && item.suit === card[1]) {
+        if(isEqual(item, card)) {
           array.splice(index, 1)
           return true
         }

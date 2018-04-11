@@ -1,6 +1,6 @@
 const cards = require('./cards')
-const { shuffle } = require('lodash')
-const { cardWeight, randomKey } = require('./heplers')
+const { shuffle, minBy } = require('lodash')
+const { randomKey } = require('./heplers')
 
 module.exports = class Game {
   constructor () {
@@ -30,8 +30,13 @@ module.exports = class Game {
   startGame () {
     this.started = true
     this.trump = this.cards[0].suit
-
-    this.__giveCardsFirsTime()
+    
+    this.giveCards()
+    this.currentPlayer = this.__getPlayerWhoMoveFirst()
+    this.players.get(this.currentPlayer).move = 1
+    this.moveTo = this.nextPlayer(this.currentPlayer)
+    this.players.get(this.moveTo).move = 2
+    this.state = 1
   }
 
   addToPlayground (card) {
@@ -86,38 +91,25 @@ module.exports = class Game {
     return this.playground
   }
 
-  __giveCardsFirsTime () {
+  /* TODO: give cards first to player who just move */
+  giveCards () {
     this.players.forEach((player, key) => {
-      player.lessTrump = 100
-
-      for (let x = 0; x < 6; x++) {
-        let card = this.cards.pop()
+      while(player.cards.length < 6 && this.cards.length) {
+        const card = this.cards.pop()
         player.cards.push(card)
-  
-        if (card.suit === this.trump) {
-          if (cardWeight(card.card) < player.lessTrump) {
-            player.lessTrump = cardWeight(card.card)
-          }
-        }
       }
     })
+  }
 
-    let playerWithLessTrump = -1
-    let lessTrump = 100
-    this.players.forEach((player, key) => {
-      if (player.lessTrump < lessTrump) {
-        lessTrump = player.lessTrump
-        playerWithLessTrump = key
-      }
-      delete this.player.lessTrump
-    })
-    if (playerWithLessTrump === -1) {
-      playerWithLessTrump = randomKey(this.players)
-    }
-    this.currentPlayer = playerWithLessTrump
-    this.players.get(this.currentPlayer).move = 1
-    this.moveTo = this.nextPlayer(this.currentPlayer)
-    this.players.get(this.moveTo).move = 2
-    this.state = 1
+  __getPlayerWhoMoveFirst () {
+    const players = Array.from(this.players.values())
+    const cards = players.reduce((accum, { cards, id }) => {
+      const cardsWithPlayerId = cards.map(card => Object.assign({}, card, { playerId: id }))
+      return accum.concat(cardsWithPlayerId)
+    }, [])
+    const filteredCards = cards.filter(card => card.suit === this.trump)
+    return filteredCards.length
+      ? minBy(filteredCards, ({ card }) => card).playerId
+      : randomKey(this.players)
   }
 }

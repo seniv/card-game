@@ -1,5 +1,5 @@
 <template>
-  <li class="card" @click="$emit('click', card + ':' + suit)" :data-card="card" :class="[{ red: isRed }, size]" v-html="cardSymbol"></li>
+  <li class="card" @click="$emit('click', { card, suit })" :data-card="cardLabel" :class="[{ red: isRed }, size]" v-html="cardSymbol"></li>
 </template>
 
 <script>
@@ -11,6 +11,10 @@ export default {
     }
   },
   computed: {
+    cardLabel () {
+      const cardLabels = ['6', '7', '8', '9', '10', 'j', 'q', 'k', 'a']
+      return cardLabels[this.card - 1] || 'None'
+    },
     cardSymbol () {
       return `&${this.suit};`
     },

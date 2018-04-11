@@ -37,7 +37,7 @@ export default {
   },
   computed: {
     move () {
-      switch (this.yourMove){
+      switch (this.yourMove) {
         case 1: return 'Your move'
         case 2: return 'You must beat'
         default: return ''
@@ -58,7 +58,7 @@ export default {
     connect () {
       console.log('socket connected')
     },
-    massage (text) {
+    message (text) {
       console.log(text)
       alert(text)
     },
