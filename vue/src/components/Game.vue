@@ -16,6 +16,7 @@
       <card-front v-show="cardsLeft > 0 && trump" :suit="trump.suit" style="transform: rotate(90deg); margin-left: -40px; margin-right: 40px;" :card="trump.card"></card-front>
       <li style="display: inline-block;">Cards left:<br>{{cardsLeft}}</li>
     </ul>
+    <span v-text="move">Your move</span>
     <ul class="your-cards">
       <card-front @click="clickOnCard" :suit="card.suit" :size="getSize(cards.length)" :card="card.card" v-for="(card, index) in cards" :key="index"></card-front>
     </ul>
@@ -33,6 +34,15 @@ export default {
   components: {
     CardFront,
     CardBack
+  },
+  computed: {
+    move () {
+      switch (this.yourMove){
+        case 1: return 'Your move'
+        case 2: return 'You must beat'
+        default: return ''
+      }
+    }
   },
   data () {
     return {
