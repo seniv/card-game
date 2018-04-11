@@ -1,5 +1,5 @@
 const io = require('socket.io')(8090)
-const { isEqual } = require('lodash')
+const _ = require('lodash')
 
 const Game = require('./game')
 const games = new Map()
@@ -47,10 +47,10 @@ io.on('connection', (socket) => {
     updateGame(socket.gameId)
   })
 
-  socket.on('makeMove', (card) => {
+  socket.on('makeMove', (data) => {
     if (!socket.gameId || !games.has(socket.gameId)) return false
 
-    makeMove(socket, card)
+    makeMove(socket, data)
   })
 
   socket.on('leaveGame', () => {
@@ -80,35 +80,45 @@ io.on('connection', (socket) => {
   })
 })
 
-function makeMove(socket, card) {
+function makeMove(socket, { card, cardToBeat }) {
   const game = games.get(socket.gameId)
   const player = game.player(socket.id)
   if (player.move !== game.state) {
     return socket.emit('message', 'now is not your move!')
   }
-  if (!player.cards.find(item => isEqual(item, card))) {
+  const cardIndex = _.findIndex(player.cards, item => _.isEqual(item, card))
+  if (cardIndex === -1) {
     return socket.emit('message', 'you dont have this card O_o')
   }
   switch (player.move) {
     case 1:
-      card = player.cards.find((item, index, array) => {
-        if(isEqual(item, card)) {
-          array.splice(index, 1)
-          return true
-        }
-      })
+      player.cards.splice(cardIndex, 1)
+      
       game.addToPlayground(card)
       player.move = 0
+      game.state = 2
       updateGame(socket.gameId)
       break
     case 2:
-      card = player.cards.find((item, index, array) => {
-        if(isEqual(item, card)) {
-          array.splice(index, 1)
-          return true
+      const playground = game.getPlayground
+      const pgIndex = _.findIndex(playground, item => _.isEqual(item.placedCard, cardToBeat))
+      if (pgIndex === -1) return socket.emit('message', 'card not valid')
+      if (playground[pgIndex].beatedCard) return socket.emit('message', 'this card already beaten')
+
+      const isTrump = ({suit}) => suit === game.trump
+      if (isTrump(card)) {
+        if (isTrump(cardToBeat) && card.card < cardToBeat.card) {
+          return socket.emit('message', 'your card can not be less')
         }
-      })
-      game.getPlayground[game.getPlayground.length - 1].beatedCard = card
+      } else {
+        if (card.suit !== cardToBeat.suit) return socket.emit('message', 'card must have same suit')
+        if (card.card < cardToBeat.card) {
+          return socket.emit('message', 'your card can not be less')
+        }
+      }
+      player.cards.splice(cardIndex, 1)
+      
+      game.getPlayground[pgIndex].beatedCard = card
       player.move = 0
       updateGame(socket.gameId)
       break

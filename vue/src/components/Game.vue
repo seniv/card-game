@@ -6,7 +6,7 @@
     <ul class="playground">
       <li v-for="(card, index) in playground" :key="index">
         <ul>
-          <card-front :suit="card.placedCard.suit" size="super-small" :card="card.placedCard.card"></card-front>
+          <card-front @click="beat" :suit="card.placedCard.suit" size="super-small" :card="card.placedCard.card"></card-front>
           <card-front v-show="card.beatedCard" :suit="card.beatedCard.suit" size="super-small" :card="card.beatedCard.card"></card-front>
         </ul>
       </li>
@@ -16,7 +16,7 @@
       <card-front v-show="cardsLeft > 0 && trump" :suit="trump.suit" style="transform: rotate(90deg); margin-left: -40px; margin-right: 40px;" :card="trump.card"></card-front>
       <li style="display: inline-block;">Cards left:<br>{{cardsLeft}}</li>
     </ul>
-    <span v-text="move">Your move</span>
+    <span v-text="move"></span>
     <ul class="your-cards">
       <card-front @click="clickOnCard" :suit="card.suit" :size="getSize(cards.length)" :card="card.card" v-for="(card, index) in cards" :key="index"></card-front>
     </ul>
@@ -51,7 +51,8 @@ export default {
       enemyCards: 0,
       cardsLeft: 0,
       yourMove: 0,
-      playground: []
+      playground: [],
+      selectedCard: undefined
     }
   },
   sockets: {
@@ -82,10 +83,16 @@ export default {
       return ''
     },
     clickOnCard (data) {
-      if (this.yourMove > 0) {
-        this.$socket.emit('makeMove', data)
+      if (this.yourMove === 1) {
+        this.$socket.emit('makeMove', { card: data })
+      } else if (this.yourMove === 2) {
+        this.selectedCard = data
       }
       console.log('clicked on card', data)
+    },
+    beat (data) {
+      this.$socket.emit('makeMove', { card: this.selectedCard, cardToBeat: data })
+      this.selectedCard = null
     }
   }
 }
