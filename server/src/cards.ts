@@ -1,4 +1,4 @@
-module.exports = [
+export default [
   {card: 1, suit: 'hearts'},
   {card: 1, suit: 'diams'},
   {card: 1, suit: 'spades'},

@@ -1,21 +1,33 @@
-const cards = require('./cards')
-const { shuffle, minBy } = require('lodash')
-const { randomKey } = require('./heplers')
+import cards from './cards';
+import { shuffle, minBy } from 'lodash';
+import { randomKey } from './heplers';
 
-module.exports = class Game {
+import { Card, Player, PlaygroundSlot } from './interfaces';
+
+class Game {
+  id: number;
+  cards: Array<Card>;
+  players: Map<string, Player>;
+  playground: Array<PlaygroundSlot>;
+  started: boolean;
+  trump: String;
+  currentPlayer: string;
+  moveTo: string;
+  state: number;
+
   constructor () {
     this.id = Math.random()
     this.cards = shuffle(cards)
     this.players = new Map()
     this.playground = []
     this.started = false
-    this.trump = false
+    this.trump;
     this.currentPlayer
     this.moveTo
     this.state = 0
   }
 
-  newPlayer (id) {
+  newPlayer (id: string) {
     this.players.set(id, {
       id: id,
       cards: [],
@@ -23,7 +35,7 @@ module.exports = class Game {
     })
   }
 
-  playerLeft (id) {
+  playerLeft (id: string) {
     this.players.delete(id)
   }
 
@@ -39,25 +51,25 @@ module.exports = class Game {
     this.state = 1
   }
 
-  addToPlayground (card) {
+  addToPlayground (card: Card) {
     this.playground.push({
       placedCard: card,
-      beatedCard: false
+      beatedCard: undefined,
     })
   }
 
-  player (id) {
+  player (id: string) {
     return this.players.get(id)
   }
 
-  nextPlayer (id) {
-    let array = Array.from(this.players.keys())
-    for (let i = 0; i < array.length; i++) {
-      if (array[i] === id) {
-        if (i + 1 >= array.length) {
-          return array[0]
+  nextPlayer (id: string) {
+    let playersKeys = Array.from(this.players.keys())
+    for (let i = 0; i < playersKeys.length; i++) {
+      if (playersKeys[i] === id) {
+        if (i + 1 >= playersKeys.length) {
+          return playersKeys[0]
         } else {
-          return array[i+1]
+          return playersKeys[i+1]
         }
       }
     }
@@ -113,3 +125,5 @@ module.exports = class Game {
       : randomKey(this.players)
   }
 }
+
+export default Game;

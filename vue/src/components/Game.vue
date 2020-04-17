@@ -7,7 +7,7 @@
       <li v-for="(card, index) in playground" :key="index">
         <ul>
           <card-front @click="beat" :suit="card.placedCard.suit" size="super-small" :card="card.placedCard.card"></card-front>
-          <card-front v-show="card.beatedCard" :suit="card.beatedCard.suit" size="super-small" :card="card.beatedCard.card"></card-front>
+          <card-front v-if="card.beatedCard" :suit="card.beatedCard.suit" size="super-small" :card="card.beatedCard.card"></card-front>
         </ul>
       </li>
     </ul>

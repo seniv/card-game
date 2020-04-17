@@ -1,10 +1,18 @@
-const io = require('socket.io')(8090)
-const _ = require('lodash')
+import * as IO from 'socket.io';
+import { isEqual } from 'lodash';
 
-const Game = require('./game')
-const games = new Map()
+import Game from './game';
+import { Card } from './interfaces';
 
-io.on('connection', (socket) => {
+const io = IO(8090);
+
+const games: Map<number, Game> = new Map();
+
+interface GameSocket extends SocketIO.Socket {
+  gameId: number;
+}
+
+io.on('connection', (socket: GameSocket) => {
   socket.on('getGames', () => {
     socket.emit('gamesList', gamesList())
   })
@@ -80,13 +88,13 @@ io.on('connection', (socket) => {
   })
 })
 
-function makeMove(socket, { card, cardToBeat }) {
+function makeMove(socket: GameSocket, { card, cardToBeat }: { card: Card, cardToBeat: Card }) {
   const game = games.get(socket.gameId)
   const player = game.player(socket.id)
   if (player.move !== game.state) {
     return socket.emit('message', 'now is not your move!')
   }
-  const cardIndex = _.findIndex(player.cards, item => _.isEqual(item, card))
+  const cardIndex = player.cards.findIndex(item => isEqual(item, card))
   if (cardIndex === -1) {
     return socket.emit('message', 'you dont have this card O_o')
   }
@@ -101,11 +109,11 @@ function makeMove(socket, { card, cardToBeat }) {
       break
     case 2:
       const playground = game.getPlayground
-      const pgIndex = _.findIndex(playground, item => _.isEqual(item.placedCard, cardToBeat))
+      const pgIndex = playground.findIndex(item => isEqual(item.placedCard, cardToBeat))
       if (pgIndex === -1) return socket.emit('message', 'card not valid')
       if (playground[pgIndex].beatedCard) return socket.emit('message', 'this card already beaten')
 
-      const isTrump = ({suit}) => suit === game.trump
+      const isTrump = ({suit}: Card) => suit === game.trump
       if (isTrump(card)) {
         if (isTrump(cardToBeat) && card.card < cardToBeat.card) {
           return socket.emit('message', 'your card can not be less')
@@ -126,8 +134,9 @@ function makeMove(socket, { card, cardToBeat }) {
   }
 }
 
-function updateGame(id) {
+function updateGame(id: number) {
   games.get(id).allPlayers.forEach((player, key) => {
+    console.log('update game', id, player)
     io.to(key).emit('gameUpdate', {
       cardsLeft: games.get(id).cardsLeft,
       cards: player.cards,
