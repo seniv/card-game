@@ -5,6 +5,7 @@ import { randomKey } from './heplers';
 import {
   Card, Player, PlaygroundSlot, GameInfo,
 } from './interfaces';
+import { MoveStates } from './enums';
 
 class Game {
   id: number;
@@ -15,7 +16,7 @@ class Game {
   trump: string;
   currentPlayer: string;
   moveTo: string;
-  state: number;
+  moveState: MoveStates;
 
   constructor() {
     this.id = Math.random();
@@ -26,14 +27,14 @@ class Game {
     this.trump = undefined;
     this.currentPlayer = undefined;
     this.moveTo = undefined;
-    this.state = 0;
+    this.moveState = MoveStates.NONE;
   }
 
   newPlayer(id: string): void {
     this.players.set(id, {
       id,
       cards: [],
-      move: 0, // 0 - not your move | 1 - your move | 2 - you must beat
+      moveState: MoveStates.NONE, // 0 - not your move | 1 - your move | 2 - you must beat
     });
   }
 
@@ -47,10 +48,10 @@ class Game {
 
     this.giveCards();
     this.currentPlayer = this.getPlayerWhoMoveFirst();
-    this.players.get(this.currentPlayer).move = 1;
+    this.players.get(this.currentPlayer).moveState = MoveStates.MOVE;
     this.moveTo = this.nextPlayer(this.currentPlayer);
-    this.players.get(this.moveTo).move = 2;
-    this.state = 1;
+    this.players.get(this.moveTo).moveState = MoveStates.BEAT;
+    this.moveState = MoveStates.MOVE;
   }
 
   addToPlayground(card: Card): void {

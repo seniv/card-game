@@ -3,6 +3,7 @@ import { isEqual } from 'lodash';
 
 import Game from './game';
 import { Card, GameInfo } from './interfaces';
+import { MoveStates } from './enums';
 
 const io = IO(8090);
 
@@ -19,7 +20,7 @@ function updateGame(id: number): void {
       cardsLeft: games.get(id).cardsLeft,
       cards: player.cards,
       trump: games.get(id).cards[0],
-      yourMove: player.move,
+      yourMove: player.moveState,
       playground: games.get(id).getPlayground,
     });
   });
@@ -31,7 +32,7 @@ function makeMove(
 ): void {
   const game = games.get(socket.gameId);
   const player = game.player(socket.id);
-  if (player.move !== game.state) {
+  if (player.moveState !== game.moveState) {
     socket.emit('message', 'now is not your move!');
     return;
   }
@@ -40,17 +41,17 @@ function makeMove(
     socket.emit('message', 'you dont have this card O_o');
     return;
   }
-  switch (player.move) {
-    case 1: {
+  switch (player.moveState) {
+    case MoveStates.MOVE: {
       player.cards.splice(cardIndex, 1);
 
       game.addToPlayground(card);
-      player.move = 0;
-      game.state = 2;
+      player.moveState = MoveStates.NONE;
+      game.moveState = MoveStates.BEAT;
       updateGame(socket.gameId);
       break;
     }
-    case 2: {
+    case MoveStates.BEAT: {
       const playground = game.getPlayground;
       const pgIndex = playground.findIndex((item) => isEqual(item.placedCard, cardToBeat));
       if (pgIndex === -1) {
@@ -81,7 +82,7 @@ function makeMove(
       player.cards.splice(cardIndex, 1);
 
       game.getPlayground[pgIndex].beatedCard = card;
-      player.move = 0;
+      player.moveState = MoveStates.NONE;
       updateGame(socket.gameId);
       break;
     }

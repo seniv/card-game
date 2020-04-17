@@ -1,3 +1,5 @@
+import { MoveStates } from './enums';
+
 export interface Card {
   card: number;
   suit: string;
@@ -6,7 +8,7 @@ export interface Card {
 export interface Player {
   id: string;
   cards: Array<Card>;
-  move: number;
+  moveState: MoveStates;
 }
 
 export interface PlaygroundSlot {
