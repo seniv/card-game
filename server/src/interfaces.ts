@@ -13,3 +13,9 @@ export interface PlaygroundSlot {
   placedCard: Card;
   beatedCard: Card;
 }
+
+export interface GameInfo {
+  id: number;
+  players: number;
+  started: boolean;
+}
