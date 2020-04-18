@@ -75,6 +75,21 @@ class Game {
     this.playground = [];
   }
 
+  takeCards(playerId: string): void {
+    const player = this.players.get(playerId);
+
+    this.playground.forEach(({ beatedCard, placedCard }) => {
+      if (placedCard) {
+        player.cards.push(placedCard);
+      }
+      if (beatedCard) {
+        player.cards.push(beatedCard);
+      }
+    });
+
+    this.clearPlayground();
+  }
+
   player(id: string): Player {
     return this.players.get(id);
   }
@@ -121,6 +136,8 @@ class Game {
 
   /* TODO: give cards first to player who just move */
   giveCards(): void {
+    if (!this.cards.length) return;
+
     this.players.forEach((player) => {
       while (player.cards.length < 6 && this.cards.length) {
         const card = this.cards.pop();

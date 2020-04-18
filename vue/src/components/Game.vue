@@ -28,7 +28,9 @@
         :key="index"
       />
     </ul>
-    <button @click="$socket.emit('startGame')">start game</button>
+    <button v-if="displayTakeCards" @click="$socket.emit('takeCards')">Take cards</button>
+    <button v-if="!isGameStarted" @click="$socket.emit('startGame')">Start game</button>
+    <button @click="leaveGame">Leave game</button>
   </div>
 </template>
 
@@ -50,6 +52,9 @@ export default {
         case 2: return 'You must beat'
         default: return ''
       }
+    },
+    displayTakeCards () {
+      return this.yourMove === 2 && this.playground.some(slot => !slot.beatedCard)
     }
   },
   data () {
@@ -60,6 +65,7 @@ export default {
       cardsLeft: 0,
       yourMove: 0,
       playground: [],
+      isGameStarted: false,
       selectedCard: undefined
     }
   },
@@ -79,6 +85,7 @@ export default {
       this.cardsLeft = data.cardsLeft
       this.playground = data.playground
       this.yourMove = data.yourMove
+      this.isGameStarted = data.isGameStarted
     }
   },
   methods: {
@@ -95,6 +102,7 @@ export default {
     },
     clickOnCard (data) {
       if (this.yourMove === 1) {
+        // TODO: multiselect cards to place more than one card during one move
         this.$socket.emit('makeMove', { card: data })
       } else if (this.yourMove === 2) {
         this.selectedCard = data
@@ -104,6 +112,10 @@ export default {
     beat (data) {
       this.$socket.emit('makeMove', { card: this.selectedCard, cardToBeat: data })
       this.selectedCard = null
+    },
+    leaveGame () {
+      this.$router.replace('/')
+      this.$socket.emit('leaveGame')
     }
   }
 }
