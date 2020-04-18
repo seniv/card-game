@@ -18,7 +18,15 @@
     </ul>
     <span v-text="move"></span>
     <ul class="your-cards">
-      <card-front @click="clickOnCard" :suit="card.suit" :size="getSize(cards.length)" :card="card.card" v-for="(card, index) in cards" :key="index"></card-front>
+      <card-front
+        @click="clickOnCard"
+        :suit="card.suit"
+        :size="getSize(cards.length)"
+        :card="card.card"
+        :selected="isSelected(card)"
+        v-for="(card, index) in cards"
+        :key="index"
+      />
     </ul>
     <button @click="$socket.emit('startGame')">start game</button>
   </div>
@@ -81,6 +89,9 @@ export default {
         return 'small'
       }
       return ''
+    },
+    isSelected (card) {
+      return !!this.selectedCard && card.card === this.selectedCard.card && card.suit === this.selectedCard.suit
     },
     clickOnCard (data) {
       if (this.yourMove === 1) {

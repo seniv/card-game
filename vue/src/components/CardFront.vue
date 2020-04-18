@@ -1,11 +1,17 @@
 <template>
-  <li class="card" @click="$emit('click', { card, suit })" :data-card="cardLabel" :class="[{ red: isRed }, size]" v-html="cardSymbol"></li>
+  <li
+    class="card"
+    @click="$emit('click', { card, suit })"
+    :data-card="cardLabel"
+    :class="[{ red: isRed }, size, { selected: selected}]"
+    v-html="cardSymbol"
+  />
 </template>
 
 <script>
 export default {
   name: 'card-front',
-  props: ['card', 'suit', 'size'],
+  props: ['card', 'suit', 'size', 'selected'],
   data () {
     return {
     }
@@ -44,6 +50,10 @@ export default {
 
   li.card.red {
     color: #d00;
+  }
+
+  li.card.selected {
+    bottom: 30px;
   }
 
   li.card:not(:first-child) {
