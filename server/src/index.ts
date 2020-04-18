@@ -11,6 +11,7 @@ const games: Map<number, Game> = new Map();
 
 interface GameSocket extends SocketIO.Socket {
   gameId: number;
+  sendMessage(message: string): void;
 }
 
 function updateGame(id: number): void {
@@ -19,7 +20,7 @@ function updateGame(id: number): void {
     io.to(key).emit('gameUpdate', {
       cardsLeft: games.get(id).cardsLeft,
       cards: player.cards,
-      trump: games.get(id).cards[0],
+      trump: games.get(id).trumpCard,
       yourMove: player.moveState,
       playground: games.get(id).getPlayground,
     });
@@ -32,15 +33,19 @@ function makeMove(
 ): void {
   const game = games.get(socket.gameId);
   const player = game.player(socket.id);
+  const isTrump = ({ suit }: Card): boolean => suit === game.trumpCard.suit;
+
   if (player.moveState !== game.moveState) {
-    socket.emit('message', 'now is not your move!');
+    socket.sendMessage('now is not your move!');
     return;
   }
+
   const cardIndex = player.cards.findIndex((item) => isEqual(item, card));
   if (cardIndex === -1) {
-    socket.emit('message', 'you dont have this card O_o');
+    socket.sendMessage('you dont have this card O_o');
     return;
   }
+
   switch (player.moveState) {
     case MoveStates.MOVE: {
       player.cards.splice(cardIndex, 1);
@@ -55,27 +60,26 @@ function makeMove(
       const playground = game.getPlayground;
       const pgIndex = playground.findIndex((item) => isEqual(item.placedCard, cardToBeat));
       if (pgIndex === -1) {
-        socket.emit('message', 'card not valid');
+        socket.sendMessage('card not valid');
         return;
       }
       if (playground[pgIndex].beatedCard) {
-        socket.emit('message', 'this card already beaten');
+        socket.sendMessage('this card already beaten');
         return;
       }
 
-      const isTrump = ({ suit }: Card): boolean => suit === game.trump;
       if (isTrump(card)) {
         if (isTrump(cardToBeat) && card.card < cardToBeat.card) {
-          socket.emit('message', 'your card can not be less');
+          socket.sendMessage('your card can not be less');
           return;
         }
       } else {
         if (card.suit !== cardToBeat.suit) {
-          socket.emit('message', 'card must have same suit');
+          socket.sendMessage('card must have same suit');
           return;
         }
         if (card.card < cardToBeat.card) {
-          socket.emit('message', 'your card can not be less');
+          socket.sendMessage('your card can not be less');
           return;
         }
       }
@@ -83,11 +87,17 @@ function makeMove(
 
       game.getPlayground[pgIndex].beatedCard = card;
       player.moveState = MoveStates.NONE;
+
+      game.clearPlayground();
+      game.moveToNextPlayers();
+      game.giveCards();
+      game.moveState = MoveStates.MOVE;
+
       updateGame(socket.gameId);
       break;
     }
     default: {
-      socket.emit('message', 'you cant move!');
+      socket.sendMessage('you cant move!');
     }
   }
 }
@@ -96,8 +106,15 @@ function gamesList(): Array<GameInfo> {
   return Array.from(games.values(), (game) => game.gameInfo);
 }
 
+function updateGamesList(): void {
+  io.emit('gamesList', gamesList());
+}
 
 io.on('connection', (socket: GameSocket) => {
+  socket.sendMessage = (message): void => {
+    socket.emit('message', message);
+  };
+
   socket.on('getGames', () => {
     socket.emit('gamesList', gamesList());
   });
@@ -114,18 +131,22 @@ io.on('connection', (socket: GameSocket) => {
     socket.gameId = game.id;
     socket.emit('gameIsReady', game.id);
     console.log('game id', game.id, 'created');
+
+    updateGamesList();
   });
 
   socket.on('connectToGame', (id) => {
     if (socket.gameId) return false;
-    if (!games.has(id)) return socket.emit('message', 'game not found');
-    if (games.get(id).isStarted) return socket.emit('message', 'you cant connect to started game');
+    if (!games.has(id)) return socket.sendMessage('game not found');
+    if (games.get(id).isStarted) return socket.sendMessage('you cant connect to started game');
 
     console.log('user', socket.id, 'connected to game', id);
     games.get(id).newPlayer(socket.id);
     socket.join(`game${id}`);
     socket.gameId = id;
     socket.emit('gameIsReady', id);
+
+    updateGamesList();
   });
 
   socket.on('startGame', () => {
@@ -134,13 +155,15 @@ io.on('connection', (socket: GameSocket) => {
     }
 
     if (games.get(socket.gameId).playersCount < 2) {
-      socket.emit('message', 'cant start game if players less then two');
+      socket.sendMessage('cant start game if players less then two');
       return;
     }
     console.log('game', socket.gameId, 'was started');
 
     games.get(socket.gameId).startGame();
     updateGame(socket.gameId);
+
+    updateGamesList();
   });
 
   socket.on('makeMove', (data) => {
@@ -160,6 +183,8 @@ io.on('connection', (socket: GameSocket) => {
       console.log('game with id', socket.gameId, 'was deleted');
     }
     delete socket.gameId;
+
+    updateGamesList();
   });
 
   socket.on('disconnect', () => {
@@ -173,5 +198,7 @@ io.on('connection', (socket: GameSocket) => {
         console.log('game with id', socket.gameId, 'was deleted');
       }
     }
+
+    updateGamesList();
   });
 });

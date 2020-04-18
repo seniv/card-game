@@ -1,4 +1,4 @@
-import { shuffle, minBy } from 'lodash';
+import { shuffle, minBy, head } from 'lodash';
 import cards from './cards';
 import { randomKey } from './heplers';
 
@@ -8,15 +8,15 @@ import {
 import { MoveStates } from './enums';
 
 class Game {
-  id: number;
-  cards: Array<Card>;
-  players: Map<string, Player>;
-  playground: Array<PlaygroundSlot>;
-  started: boolean;
-  trump: string;
-  currentPlayer: string;
-  moveTo: string;
-  moveState: MoveStates;
+  public readonly id: number;
+  private readonly cards: Array<Card>;
+  private readonly players: Map<string, Player>;
+  private playground: Array<PlaygroundSlot>;
+  private started: boolean;
+  public readonly trumpCard: Card;
+  public currentPlayerId: string;
+  public moveToPlayerId: string;
+  public moveState: MoveStates;
 
   constructor() {
     this.id = Math.random();
@@ -24,9 +24,9 @@ class Game {
     this.players = new Map();
     this.playground = [];
     this.started = false;
-    this.trump = undefined;
-    this.currentPlayer = undefined;
-    this.moveTo = undefined;
+    this.trumpCard = head(this.cards);
+    this.currentPlayerId = undefined;
+    this.moveToPlayerId = undefined;
     this.moveState = MoveStates.NONE;
   }
 
@@ -44,14 +44,24 @@ class Game {
 
   startGame(): void {
     this.started = true;
-    this.trump = this.cards[0].suit;
 
     this.giveCards();
-    this.currentPlayer = this.getPlayerWhoMoveFirst();
-    this.players.get(this.currentPlayer).moveState = MoveStates.MOVE;
-    this.moveTo = this.nextPlayer(this.currentPlayer);
-    this.players.get(this.moveTo).moveState = MoveStates.BEAT;
+
+    this.currentPlayerId = this.getPlayerWhoMoveFirst();
+    this.players.get(this.currentPlayerId).moveState = MoveStates.MOVE;
+
+    this.moveToPlayerId = this.nextPlayer(this.currentPlayerId);
+    this.players.get(this.moveToPlayerId).moveState = MoveStates.BEAT;
+
     this.moveState = MoveStates.MOVE;
+  }
+
+  moveToNextPlayers(): void {
+    this.currentPlayerId = this.nextPlayer(this.currentPlayerId);
+    this.players.get(this.currentPlayerId).moveState = MoveStates.MOVE;
+
+    this.moveToPlayerId = this.nextPlayer(this.currentPlayerId);
+    this.players.get(this.moveToPlayerId).moveState = MoveStates.BEAT;
   }
 
   addToPlayground(card: Card): void {
@@ -59,6 +69,10 @@ class Game {
       placedCard: card,
       beatedCard: undefined,
     });
+  }
+
+  clearPlayground(): void {
+    this.playground = [];
   }
 
   player(id: string): Player {
@@ -121,7 +135,7 @@ class Game {
       const cardsWithPlayerId = playerCards.map((card) => ({ ...card, playerId: id }));
       return accum.concat(cardsWithPlayerId);
     }, []);
-    const filteredCards = playersCards.filter((card) => card.suit === this.trump);
+    const filteredCards = playersCards.filter((card) => card.suit === this.trumpCard.suit);
     return filteredCards.length
       ? minBy(filteredCards, ({ card }) => card).playerId
       : randomKey(this.players);
