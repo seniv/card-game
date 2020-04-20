@@ -1,5 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import styled from 'styled-components';
+
+import GamesList from './pages/GamesList';
+import Game from './pages/Game';
 
 const AppContainer = styled.div`
   font-family: 'Avenir', Helvetica, Arial, sans-serif;
@@ -16,21 +19,15 @@ const AppContainer = styled.div`
 `;
 
 function App() {
+  const [gameId, setGameId] = useState(0);
+
   return (
     <AppContainer>
-      <header className="App-header">
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+      {gameId ? (
+        <Game id={gameId} />
+      ) : (
+        <GamesList setGameId={setGameId} />
+      )}
     </AppContainer>
   );
 }
