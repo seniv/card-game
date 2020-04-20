@@ -14,9 +14,9 @@ export const allHaveSameValue = (cards: Array<Card>): boolean => {
   for (let i = 0; i < cards.length; i++) {
     const card = cards[i];
     if (!lastValue) {
-      lastValue = card.card;
+      lastValue = card.value;
     }
-    if (card.card !== lastValue) {
+    if (card.value !== lastValue) {
       return false;
     }
   }

@@ -6,14 +6,14 @@
     <ul class="playground">
       <li v-for="(card) in playground" :key="card.id">
         <ul>
-          <card-front @click="beat(card.placedCard)" :suit="card.placedCard.suit" size="super-small" :card="card.placedCard.card"></card-front>
-          <card-front v-if="card.beatenCard" :suit="card.beatenCard.suit" size="super-small" :card="card.beatenCard.card"></card-front>
+          <card-front @click="beat(card.placedCard)" :suit="card.placedCard.suit" size="super-small" :value="card.placedCard.value"></card-front>
+          <card-front v-if="card.beatenCard" :suit="card.beatenCard.suit" size="super-small" :value="card.beatenCard.value"></card-front>
         </ul>
       </li>
     </ul>
     <ul class="cards-left">
       <card-back v-show="cardsLeft > 1"></card-back>
-      <card-front v-show="cardsLeft > 0 && trump" :suit="trump.suit" style="transform: rotate(90deg); margin-left: -40px; margin-right: 40px;" :card="trump.card"></card-front>
+      <card-front v-show="cardsLeft > 0 && trump" :suit="trump.suit" style="transform: rotate(90deg); margin-left: -40px; margin-right: 40px;" :value="trump.value"></card-front>
       <li style="display: inline-block;">Cards left:<br>{{cardsLeft}}</li>
     </ul>
     <span v-text="move"></span>
@@ -21,7 +21,7 @@
       <card-front
         :suit="card.suit"
         :size="getSize(cards.length)"
-        :card="card.card"
+        :value="card.value"
         :selected="isSelected(card)"
         v-for="(card) in cards"
         @click="clickOnCard(card)"
@@ -108,7 +108,7 @@ export default {
           this.selectedCardIds.splice(index, 1)
         } else {
           const firstSelectedCard = this.cards.find(({ id }) => id === this.selectedCardIds[0])
-          if (firstSelectedCard && firstSelectedCard.card === card.card) {
+          if (firstSelectedCard && firstSelectedCard.value === card.value) {
             this.selectedCardIds.push(card.id)
           } else {
             this.selectedCardIds = [card.id]

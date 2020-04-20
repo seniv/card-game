@@ -85,8 +85,8 @@ function makeMove(
       }
 
       if (isTrump(card)) {
-        if (isTrump(cardToBeat) && card.card < cardToBeat.card) {
-          socket.sendMessage('your card can not be less');
+        if (isTrump(cardToBeat) && card.value < cardToBeat.value) {
+          socket.sendMessage('your card value can not be less');
           return;
         }
       } else {
@@ -94,8 +94,8 @@ function makeMove(
           socket.sendMessage('card must have same suit');
           return;
         }
-        if (card.card < cardToBeat.card) {
-          socket.sendMessage('your card can not be less');
+        if (card.value < cardToBeat.value) {
+          socket.sendMessage('your card value can not be less');
           return;
         }
       }

@@ -4,7 +4,7 @@ import Game from './game';
 
 export interface Card {
   id: number;
-  card: number;
+  value: number;
   suit: string;
 }
 

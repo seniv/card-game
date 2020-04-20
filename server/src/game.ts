@@ -150,7 +150,7 @@ class Game {
     }, []);
     const filteredCards = playersCards.filter((card) => card.suit === this.trumpCard.suit);
     return filteredCards.length
-      ? minBy(filteredCards, ({ card }) => card).playerId
+      ? minBy(filteredCards, ({ value }) => value).playerId
       : randomKey(this.players);
   }
 }

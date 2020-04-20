@@ -11,7 +11,7 @@
 <script>
 export default {
   name: 'card-front',
-  props: ['card', 'suit', 'size', 'selected'],
+  props: ['value', 'suit', 'size', 'selected'],
   data () {
     return {
     }
@@ -19,7 +19,7 @@ export default {
   computed: {
     cardLabel () {
       const cardLabels = ['6', '7', '8', '9', '10', 'j', 'q', 'k', 'a']
-      return cardLabels[this.card - 1] || 'None'
+      return cardLabels[this.value - 1] || 'None'
     },
     cardSymbol () {
       return `&${this.suit};`
