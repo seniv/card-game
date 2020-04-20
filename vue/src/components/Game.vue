@@ -4,9 +4,9 @@
       <card-back :title="enemyCards"></card-back>
     </ul>
     <ul class="playground">
-      <li v-for="(card, index) in playground" :key="index">
+      <li v-for="(card) in playground" :key="card.id">
         <ul>
-          <card-front @click="beat" :suit="card.placedCard.suit" size="super-small" :card="card.placedCard.card"></card-front>
+          <card-front @click="beat(card.placedCard)" :suit="card.placedCard.suit" size="super-small" :card="card.placedCard.card"></card-front>
           <card-front v-if="card.beatedCard" :suit="card.beatedCard.suit" size="super-small" :card="card.beatedCard.card"></card-front>
         </ul>
       </li>
@@ -19,16 +19,16 @@
     <span v-text="move"></span>
     <ul class="your-cards">
       <card-front
-        @click="clickOnCard"
         :suit="card.suit"
         :size="getSize(cards.length)"
         :card="card.card"
         :selected="isSelected(card)"
-        v-for="(card, index) in cards"
-        :key="index"
+        v-for="(card) in cards"
+        @click="clickOnCard(card)"
+        :key="card.id"
       />
     </ul>
-    <button v-if="!!selectedCards.length && yourMove === 1" @click="placeCards">Place cards</button>
+    <button v-if="!!selectedCardIds.length && yourMove === 1" @click="placeCards">Place cards</button>
     <button v-if="displayTakeCards" @click="$socket.emit('takeCards')">Take cards</button>
     <button v-if="!isGameStarted" @click="$socket.emit('startGame')">Start game</button>
     <button @click="leaveGame">Leave game</button>
@@ -67,7 +67,7 @@ export default {
       yourMove: 0,
       playground: [],
       isGameStarted: false,
-      selectedCards: []
+      selectedCardIds: []
     }
   },
   sockets: {
@@ -99,36 +99,33 @@ export default {
       return ''
     },
     isSelected (card) {
-      return this.selectedCards.some(
-        selectedCard => card.card === selectedCard.card && card.suit === selectedCard.suit
-      )
+      return this.selectedCardIds.includes(card.id)
     },
     clickOnCard (card) {
       if (this.yourMove === 1) {
-        // TODO: improve this shitty logic, maybe add ID to cards
-        if (this.selectedCards.some(selectedCard => card.card === selectedCard.card)) {
-          if (this.selectedCards.some(selectedCard => card.suit === selectedCard.suit)) {
-            const index = this.selectedCards.findIndex(
-              selectedCard => card.suit === selectedCard.suit && card.card === selectedCard.card
-            )
-            this.selectedCards.splice(index, 1)
-            return
-          }
-          this.selectedCards.push(card)
+        const index = this.selectedCardIds.indexOf(card.id)
+        if (index !== -1) {
+          this.selectedCardIds.splice(index, 1)
         } else {
-          this.selectedCards = [card]
+          const firstSelectedCard = this.cards.find(({ id }) => id === this.selectedCardIds[0])
+          if (firstSelectedCard && firstSelectedCard.card === card.card) {
+            this.selectedCardIds.push(card.id)
+          } else {
+            this.selectedCardIds = [card.id]
+          }
         }
       } else if (this.yourMove === 2) {
-        this.selectedCards = [card]
+        this.selectedCardIds = [card.id]
       }
+      console.log('selected cards', this.selectedCardIds)
       console.log('clicked on card', card)
     },
     placeCards () {
-      this.$socket.emit('makeMove', { cards: this.selectedCards })
+      this.$socket.emit('makeMove', { cardIds: this.selectedCardIds })
     },
     beat (card) {
-      this.$socket.emit('makeMove', { cards: this.selectedCards, cardToBeat: card })
-      this.selectedCards = []
+      this.$socket.emit('makeMove', { cardIds: this.selectedCardIds, cardIdToBeat: card.id })
+      this.selectedCardIds = []
     },
     leaveGame () {
       this.$router.replace('/')

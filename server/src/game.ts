@@ -1,6 +1,6 @@
 import { shuffle, minBy, head } from 'lodash';
 import cards from './cards';
-import { randomKey } from './heplers';
+import { randomKey, mapToArray } from './heplers';
 
 import {
   Card, Player, PlaygroundSlot, GameInfo,
@@ -11,7 +11,7 @@ class Game {
   public readonly id: number;
   private readonly cards: Array<Card>;
   private readonly players: Map<string, Player>;
-  private playground: Array<PlaygroundSlot>;
+  public playground: Array<PlaygroundSlot>;
   private started: boolean;
   public readonly trumpCard: Card;
   public currentPlayerId: string;
@@ -33,7 +33,7 @@ class Game {
   newPlayer(id: string): void {
     this.players.set(id, {
       id,
-      cards: [],
+      cards: new Map(),
       moveState: MoveStates.NONE, // 0 - not your move | 1 - your move | 2 - you must beat
     });
   }
@@ -80,10 +80,10 @@ class Game {
 
     this.playground.forEach(({ beatedCard, placedCard }) => {
       if (placedCard) {
-        player.cards.push(placedCard);
+        player.cards.set(placedCard.id, placedCard);
       }
       if (beatedCard) {
-        player.cards.push(beatedCard);
+        player.cards.set(beatedCard.id, beatedCard);
       }
     });
 
@@ -130,18 +130,14 @@ class Game {
     return this.cards.length;
   }
 
-  get getPlayground(): Array<PlaygroundSlot> {
-    return this.playground;
-  }
-
   /* TODO: give cards first to player who just move */
   giveCards(): void {
     if (!this.cards.length) return;
 
     this.players.forEach((player) => {
-      while (player.cards.length < 6 && this.cards.length) {
+      while (player.cards.size < 6 && this.cards.length) {
         const card = this.cards.pop();
-        player.cards.push(card);
+        player.cards.set(card.id, card);
       }
     });
   }
@@ -149,7 +145,7 @@ class Game {
   private getPlayerWhoMoveFirst(): string {
     const players = Array.from(this.players.values());
     const playersCards = players.reduce((accum, { cards: playerCards, id }) => {
-      const cardsWithPlayerId = playerCards.map((card) => ({ ...card, playerId: id }));
+      const cardsWithPlayerId = mapToArray(playerCards).map((card) => ({ ...card, playerId: id }));
       return accum.concat(cardsWithPlayerId);
     }, []);
     const filteredCards = playersCards.filter((card) => card.suit === this.trumpCard.suit);

@@ -3,13 +3,14 @@ import { MoveStates } from './enums';
 import Game from './game';
 
 export interface Card {
+  id: number;
   card: number;
   suit: string;
 }
 
 export interface Player {
   id: string;
-  cards: Array<Card>;
+  cards: Map<number, Card>;
   moveState: MoveStates;
 }
 

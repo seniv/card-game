@@ -1,11 +1,12 @@
 import * as IO from 'socket.io';
-import { isEqual, uniqWith } from 'lodash';
+import { uniq } from 'lodash';
 
 import Game from './game';
 import {
   Card, GameInfo, GameSocket, GameData,
 } from './interfaces';
 import { MoveStates } from './enums';
+import { mapToArray, allHaveSameValue } from './heplers';
 
 const PORT = 8090;
 const io = IO(PORT);
@@ -21,10 +22,10 @@ function updateGame(id: number): void {
     console.log('update game', id, player);
     io.to(key).emit('gameUpdate', {
       cardsLeft: game.cardsLeft,
-      cards: player.cards,
+      cards: mapToArray(player.cards),
       trump: game.trumpCard,
       yourMove: player.moveState,
-      playground: game.getPlayground,
+      playground: game.playground,
       isGameStarted: game.isStarted,
     });
   });
@@ -32,25 +33,18 @@ function updateGame(id: number): void {
 
 function makeMove(
   socket: GameSocket,
-  { cards, cardToBeat }: { cards: Array<Card>; cardToBeat: Card },
+  { cardIds, cardIdToBeat }: { cardIds: Array<number>; cardIdToBeat: number },
 ): void {
-  cards = uniqWith(cards, isEqual);
-
   const { game, player } = socket.getGameData();
   const isTrump = ({ suit }: Card): boolean => suit === game.trumpCard.suit;
-  const getCardIndex = (card: Card): number => player.cards.findIndex(
-    (item) => isEqual(item, card),
-  );
 
   if (player.moveState !== game.moveState) {
     socket.sendMessage('now is not your move!');
     return;
   }
 
-  const haveCards = cards.every(
-    (card) => player.cards.some((playerCard) => isEqual(playerCard, card)),
-  );
-
+  const cards = uniq(cardIds).map((cardId) => player.cards.get(cardId));
+  const haveCards = cards.every((card) => !!card);
   if (!haveCards) {
     socket.sendMessage('You don\'t have this card(s) O_o');
     return;
@@ -58,9 +52,12 @@ function makeMove(
 
   switch (player.moveState) {
     case MoveStates.MOVE: {
+      if (!allHaveSameValue(cards)) {
+        socket.sendMessage('Cards should have same value!');
+        return;
+      }
       cards.forEach((card) => {
-        const cardIndex = getCardIndex(card);
-        player.cards.splice(cardIndex, 1);
+        player.cards.delete(card.id);
         game.addToPlayground(card);
       });
 
@@ -76,13 +73,13 @@ function makeMove(
       }
 
       const [card] = cards;
-      const playground = game.getPlayground;
-      const pgIndex = playground.findIndex((item) => isEqual(item.placedCard, cardToBeat));
+      const pgIndex = game.playground.findIndex((item) => item.placedCard.id === cardIdToBeat);
+      const cardToBeat = game.playground[pgIndex]?.placedCard;
       if (pgIndex === -1) {
         socket.sendMessage('card not valid');
         return;
       }
-      if (playground[pgIndex].beatedCard) {
+      if (game.playground[pgIndex].beatedCard) {
         socket.sendMessage('this card already beaten');
         return;
       }
@@ -103,11 +100,10 @@ function makeMove(
         }
       }
 
-      const cardIndex = getCardIndex(card);
-      player.cards.splice(cardIndex, 1);
+      player.cards.delete(card.id);
 
-      game.getPlayground[pgIndex].beatedCard = card;
-      if (game.getPlayground.some(({ beatedCard }) => !beatedCard)) {
+      game.playground[pgIndex].beatedCard = card;
+      if (game.playground.some(({ beatedCard }) => !beatedCard)) {
         updateGame(game.id);
         return;
       }

@@ -1,4 +1,4 @@
-export default [
+const cards = [
   { card: 1, suit: 'hearts' },
   { card: 1, suit: 'diams' },
   { card: 1, suit: 'spades' },
@@ -44,3 +44,5 @@ export default [
   { card: 9, suit: 'spades' },
   { card: 9, suit: 'clubs' },
 ];
+
+export default cards.map((card, index) => ({ ...card, id: index }));

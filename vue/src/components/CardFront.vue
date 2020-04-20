@@ -1,7 +1,7 @@
 <template>
   <li
     class="card"
-    @click="$emit('click', { card, suit })"
+    @click="$emit('click')"
     :data-card="cardLabel"
     :class="[{ red: isRed }, size, { selected: selected}]"
     v-html="cardSymbol"
