@@ -28,6 +28,7 @@
         :key="index"
       />
     </ul>
+    <button v-if="!!selectedCards.length && yourMove === 1" @click="placeCards">Place cards</button>
     <button v-if="displayTakeCards" @click="$socket.emit('takeCards')">Take cards</button>
     <button v-if="!isGameStarted" @click="$socket.emit('startGame')">Start game</button>
     <button @click="leaveGame">Leave game</button>
@@ -66,7 +67,7 @@ export default {
       yourMove: 0,
       playground: [],
       isGameStarted: false,
-      selectedCard: undefined
+      selectedCards: []
     }
   },
   sockets: {
@@ -98,20 +99,36 @@ export default {
       return ''
     },
     isSelected (card) {
-      return !!this.selectedCard && card.card === this.selectedCard.card && card.suit === this.selectedCard.suit
+      return this.selectedCards.some(
+        selectedCard => card.card === selectedCard.card && card.suit === selectedCard.suit
+      )
     },
-    clickOnCard (data) {
+    clickOnCard (card) {
       if (this.yourMove === 1) {
-        // TODO: multiselect cards to place more than one card during one move
-        this.$socket.emit('makeMove', { card: data })
+        // TODO: improve this shitty logic, maybe add ID to cards
+        if (this.selectedCards.some(selectedCard => card.card === selectedCard.card)) {
+          if (this.selectedCards.some(selectedCard => card.suit === selectedCard.suit)) {
+            const index = this.selectedCards.findIndex(
+              selectedCard => card.suit === selectedCard.suit && card.card === selectedCard.card
+            )
+            this.selectedCards.splice(index, 1)
+            return
+          }
+          this.selectedCards.push(card)
+        } else {
+          this.selectedCards = [card]
+        }
       } else if (this.yourMove === 2) {
-        this.selectedCard = data
+        this.selectedCards = [card]
       }
-      console.log('clicked on card', data)
+      console.log('clicked on card', card)
     },
-    beat (data) {
-      this.$socket.emit('makeMove', { card: this.selectedCard, cardToBeat: data })
-      this.selectedCard = null
+    placeCards () {
+      this.$socket.emit('makeMove', { cards: this.selectedCards })
+    },
+    beat (card) {
+      this.$socket.emit('makeMove', { cards: this.selectedCards, cardToBeat: card })
+      this.selectedCards = []
     },
     leaveGame () {
       this.$router.replace('/')
