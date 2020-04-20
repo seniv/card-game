@@ -7,7 +7,7 @@
       <li v-for="(card) in playground" :key="card.id">
         <ul>
           <card-front @click="beat(card.placedCard)" :suit="card.placedCard.suit" size="super-small" :card="card.placedCard.card"></card-front>
-          <card-front v-if="card.beatedCard" :suit="card.beatedCard.suit" size="super-small" :card="card.beatedCard.card"></card-front>
+          <card-front v-if="card.beatenCard" :suit="card.beatenCard.suit" size="super-small" :card="card.beatenCard.card"></card-front>
         </ul>
       </li>
     </ul>
@@ -55,7 +55,7 @@ export default {
       }
     },
     displayTakeCards () {
-      return this.yourMove === 2 && this.playground.some(slot => !slot.beatedCard)
+      return this.yourMove === 2 && this.playground.some(slot => !slot.beatenCard)
     }
   },
   data () {

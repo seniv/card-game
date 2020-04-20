@@ -16,7 +16,7 @@ export interface Player {
 
 export interface PlaygroundSlot {
   placedCard: Card;
-  beatedCard: Card;
+  beatenCard: Card;
 }
 
 export interface GameInfo {

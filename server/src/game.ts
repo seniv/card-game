@@ -1,6 +1,6 @@
 import { shuffle, minBy, head } from 'lodash';
 import cards from './cards';
-import { randomKey, mapToArray } from './heplers';
+import { randomKey, mapToArray } from './helpers';
 
 import {
   Card, Player, PlaygroundSlot, GameInfo,
@@ -67,7 +67,7 @@ class Game {
   addToPlayground(card: Card): void {
     this.playground.push({
       placedCard: card,
-      beatedCard: undefined,
+      beatenCard: undefined,
     });
   }
 
@@ -78,12 +78,12 @@ class Game {
   takeCards(playerId: string): void {
     const player = this.players.get(playerId);
 
-    this.playground.forEach(({ beatedCard, placedCard }) => {
+    this.playground.forEach(({ beatenCard, placedCard }) => {
       if (placedCard) {
         player.cards.set(placedCard.id, placedCard);
       }
-      if (beatedCard) {
-        player.cards.set(beatedCard.id, beatedCard);
+      if (beatenCard) {
+        player.cards.set(beatenCard.id, beatenCard);
       }
     });
 

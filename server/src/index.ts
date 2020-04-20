@@ -6,7 +6,7 @@ import {
   Card, GameInfo, GameSocket, GameData,
 } from './interfaces';
 import { MoveStates } from './enums';
-import { mapToArray, allHaveSameValue } from './heplers';
+import { mapToArray, allHaveSameValue } from './helpers';
 
 const PORT = 8090;
 const io = IO(PORT);
@@ -79,7 +79,7 @@ function makeMove(
         socket.sendMessage('card not valid');
         return;
       }
-      if (game.playground[pgIndex].beatedCard) {
+      if (game.playground[pgIndex].beatenCard) {
         socket.sendMessage('this card already beaten');
         return;
       }
@@ -102,8 +102,8 @@ function makeMove(
 
       player.cards.delete(card.id);
 
-      game.playground[pgIndex].beatedCard = card;
-      if (game.playground.some(({ beatedCard }) => !beatedCard)) {
+      game.playground[pgIndex].beatenCard = card;
+      if (game.playground.some(({ beatenCard }) => !beatenCard)) {
         updateGame(game.id);
         return;
       }
