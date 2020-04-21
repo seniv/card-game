@@ -1,7 +1,31 @@
 import React from 'react';
 import styled, { css } from 'styled-components';
+import { Card } from '../interfaces';
+import Clickable from './Clickable';
 
-const Card = styled.li<{ isRed: boolean, isSelected?: boolean, dangerouslySetInnerHTML: any }>`
+export enum CardSizes {
+  Small,
+  VerySmall,
+  ExtremelySmall
+}
+
+const getMarginLeft = (size?: CardSizes) => {
+  switch (size) {
+    case CardSizes.ExtremelySmall: return -70;
+    case CardSizes.VerySmall: return -50;
+    case CardSizes.Small: return -30;
+    default: return 5;
+  }
+};
+
+const ClickableContainer = styled(Clickable)<{ size?: CardSizes }>`
+  &:not(:first-child) li {
+    margin-left: ${(p) => getMarginLeft(p.size)}px;
+    ${(p) => !!p.size && 'box-shadow: -5px 0px 10px 0px rgba(0, 0, 0, 0.05);'}
+  }
+`;
+
+const StyledCard = styled.li<{ isRed: boolean; isSelected?: boolean; dangerouslySetInnerHTML: any }>`
   display: inline-block;
   width: 80px;
   height: 130px;
@@ -23,25 +47,6 @@ const Card = styled.li<{ isRed: boolean, isSelected?: boolean, dangerouslySetInn
   ${(p) => p.isSelected && css`
     bottom: 30px;
   `}
-
-  &:not(:first-child) {
-    margin-left: 5px;
-  }
-
-  /* &.super-small:not(:first-child) {
-    margin-left: -70px;
-    box-shadow: -5px 0px 10px 0px rgba(0, 0, 0, 0.05);
-  }
-
-  &.very-small:not(:first-child) {
-    margin-left: -50px;
-    box-shadow: -5px 0px 10px 0px rgba(0, 0, 0, 0.05);
-  }
-
-  &.small:not(:first-child) {
-    margin-left: -30px;
-    box-shadow: -5px 0px 10px 0px rgba(0, 0, 0, 0.05);
-  } */
 
   &:hover {
     transform: scale(1.1);
@@ -69,16 +74,12 @@ const Card = styled.li<{ isRed: boolean, isSelected?: boolean, dangerouslySetInn
   }
 `;
 
-interface Card {
-  id: number;
-  value: number;
-  suit: string;
-}
-
 interface Props {
   card: Card;
   isSelected?: boolean;
-  size?: boolean;
+  size?: CardSizes;
+  onClick?: any;
+  className?: any;
 }
 
 const getLabel = (value: number): string => {
@@ -86,14 +87,20 @@ const getLabel = (value: number): string => {
   return cardLabels[value - 1] || 'None';
 };
 
-const CardFront = ({ card }: Props) => {
+const CardFront = ({
+  card, onClick, isSelected, size, className,
+}: Props) => {
   const isRed = card.suit === 'hearts' || card.suit === 'diams';
   return (
-    <Card
-      isRed={isRed}
-      dangerouslySetInnerHTML={{ __html: `&${card.suit};` }}
-      data-card={getLabel(card.value)}
-    />
+    <ClickableContainer size={size} onClick={onClick}>
+      <StyledCard
+        className={className}
+        isSelected={isSelected}
+        isRed={isRed}
+        dangerouslySetInnerHTML={{ __html: `&${card.suit};` }}
+        data-card={getLabel(card.value)}
+      />
+    </ClickableContainer>
   );
 };
 

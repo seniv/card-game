@@ -1,8 +1,22 @@
 import React, { useState } from 'react';
-import styled from 'styled-components';
+import styled, { createGlobalStyle } from 'styled-components';
 
 import GamesList from './pages/GamesList';
 import Game from './pages/Game';
+
+const GlobalStyle = createGlobalStyle`
+  h1, h2 {
+    font-weight: normal;
+  }
+  ul {
+    list-style-type: none;
+    padding: 10px;
+    margin: 0;
+  }
+  a {
+    color: #42b983;
+  }
+`;
 
 const AppContainer = styled.div`
   font-family: 'Avenir', Helvetica, Arial, sans-serif;
@@ -23,8 +37,9 @@ function App() {
 
   return (
     <AppContainer>
+      <GlobalStyle />
       {gameId ? (
-        <Game id={gameId} />
+        <Game onLeave={() => setGameId(0)} />
       ) : (
         <GamesList setGameId={setGameId} />
       )}

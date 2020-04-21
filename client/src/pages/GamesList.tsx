@@ -1,11 +1,7 @@
 import React from 'react';
 import { socket } from '../socket';
-
-interface GameInfo {
-  id: number;
-  players: number;
-  started: boolean;
-}
+import { GameInfo } from '../interfaces';
+import Clickable from '../components/Clickable';
 
 interface State {
   gamesList: Array<GameInfo>;
@@ -30,6 +26,7 @@ class GamesList extends React.Component<Props, State> {
   componentDidMount() {
     socket.on('gamesList', this.onGamesList);
     socket.on('gameIsReady', this.onGameIsReady);
+    socket.emit('getGames');
   }
 
   componentWillUnmount() {
@@ -60,11 +57,13 @@ class GamesList extends React.Component<Props, State> {
       <div className="index">
         <ul className="games-list">
           {gamesList.map((game) => (
-            <li key={game.id} onClick={() => this.joinGame(game)}>
-              <span>{game.id}</span>
-              <span>{game.players}</span>
-              <span>{game.started}</span>
-            </li>
+            <Clickable onClick={() => this.joinGame(game)} key={game.id}>
+              <li>
+                <span>{game.id}</span>
+                <span>{game.players}</span>
+                <span>{game.started}</span>
+              </li>
+            </Clickable>
           ))}
         </ul>
         <button type="button" onClick={this.createGame}>Create new Game</button>
